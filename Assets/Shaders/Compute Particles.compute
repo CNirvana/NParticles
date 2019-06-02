@@ -1,0 +1,132 @@
+﻿#pragma kernel Init
+#pragma kernel Emit
+#pragma kernel Update
+
+#define GROUP_SIZE 256
+
+#include "Common.cginc"
+
+RWStructuredBuffer<Particle> particles;
+AppendStructuredBuffer<uint> deadList;
+ConsumeStructuredBuffer<uint> poolList;
+
+float4x4 modelMatrix;
+int randomSeed;
+
+float time;
+float deltaTime;
+
+// main module
+float startLifeTime;
+
+// emission module
+uint emissionShape;
+float radius;
+float3 startEdge;
+float3 endEdge;
+
+// velocity module
+float3 velocity;
+float3 acceleration;
+
+// color module
+uint colorMode;
+Texture2D<float4> colorTex;
+SamplerState samplercolorTex;
+
+// size module
+uint sizeMode;
+StructuredBuffer<float> size;
+int sizeBufferResolution;
+
+float rand(float id, float offset)
+{
+    return nrand(float3(id * time, offset * time, randomSeed));
+}
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void Init(uint3 id : SV_DispatchThreadID)
+{
+    particles[id.x].alive = false;
+    deadList.Append(id.x);
+}
+
+[numthreads(1, 1, 1)]
+void Emit()
+{
+    uint id = poolList.Consume();
+
+    Particle p = particles[id];
+    p.alive = true;
+    p.lifeTime = float2(0.0, startLifeTime);
+
+    switch(emissionShape)
+    {
+        case 0: // sphere
+            {
+                float3 position = pointOnSphere(rand(id, 1), rand(id, 2), radius);
+                p.position = mul(modelMatrix, float4(position, 1)).xyz;
+                p.velocity = normalize(p.position) * length(velocity);
+            }
+            break;
+        case 1: // edge
+            {
+                p.position = startEdge + rand(id, 1) * (endEdge - startEdge);
+                p.velocity = velocity;
+            }
+            break;
+    }
+
+    if(colorMode == 0) // random color
+    {
+        p.color = colorTex.SampleLevel(samplercolorTex, rand(id, 3), 0.0);
+    }
+    else
+    {
+        p.color = colorTex.SampleLevel(samplercolorTex, 0.0, 0.0);
+    }
+
+    if(sizeMode == 0) // random size
+    {
+        int index = rand(id, 4) * sizeBufferResolution;
+        p.size = size[index];
+    }
+    else
+    {
+        p.size = size[0];
+    }
+
+    particles[id] = p;
+}
+
+[numthreads(GROUP_SIZE, 1, 1)]
+void Update (uint3 id : SV_DispatchThreadID)
+{
+    Particle p = particles[id.x];
+
+    float age = p.lifeTime.x / p.lifeTime.y;
+    p.lifeTime.x += deltaTime;
+
+    p.velocity += acceleration;
+    p.position += p.velocity * deltaTime;
+
+    if(colorMode == 1)
+    {
+        p.color = colorTex.SampleLevel(samplercolorTex, age, 0.0);
+    }
+    p.color = (int)p.alive * p.color;
+
+    if(sizeMode == 1)
+    {
+        int index = age * sizeBufferResolution;
+        p.size = size[index];
+    }
+
+    if(p.alive && p.lifeTime.x > p.lifeTime.y)
+    {
+        p.alive = false;
+        deadList.Append(id.x);
+    }
+
+    particles[id.x] = p;
+}
