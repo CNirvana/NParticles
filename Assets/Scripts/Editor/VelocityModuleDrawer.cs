@@ -8,7 +8,7 @@ namespace Nirvana
     {
         protected override void DrawProperty(Rect position, SerializedProperty property, GUIContent label)
         {
-            EditorGUILayout.PropertyField(property.FindPropertyRelative("velocity"));
+            EditorGUILayout.PropertyField(property.FindPropertyRelative("startSpeed"));
             EditorGUILayout.PropertyField(property.FindPropertyRelative("acceleration"));
         }
     }

@@ -60,11 +60,14 @@ namespace Nirvana
 
         private void OnRenderObject()
         {
-            this.renderingModule.material.SetBuffer("particles", _particlesBuffer);
-            this.renderingModule.material.SetBuffer("meshDatas", _meshBuffer);
-            this.renderingModule.material.SetPass(0);
+            if(this.renderingModule.enabled)
+            {
+                this.renderingModule.material.SetBuffer("particles", _particlesBuffer);
+                this.renderingModule.material.SetBuffer("meshDatas", _meshBuffer);
+                this.renderingModule.material.SetPass(0);
 
-            Graphics.DrawProceduralNow(MeshTopology.Quads, 4, _bufferSize);
+                Graphics.DrawProceduralNow(MeshTopology.Quads, 4, _bufferSize);
+            }
         }
 
         private void ReleaseResources()
@@ -174,7 +177,7 @@ namespace Nirvana
                 _computeShader.SetVector("startEdge", this.transform.TransformPoint(this.emissionModule.startEdge));
                 _computeShader.SetVector("endEdge", this.transform.TransformPoint(this.emissionModule.endEdge));
 
-                _computeShader.SetVector("velocity", this.velocityModule.velocity);
+                _computeShader.SetFloat("startSpeed", this.velocityModule.startSpeed);
 
                 _computeShader.SetInt("colorMode", (int)this.colorModule.mode);
                 _computeShader.SetTexture(_emitKernel, "colorTex", this.colorModule.colorTexture);

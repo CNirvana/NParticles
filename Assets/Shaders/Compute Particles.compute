@@ -26,7 +26,7 @@ float3 startEdge;
 float3 endEdge;
 
 // velocity module
-float3 velocity;
+float startSpeed;
 float3 acceleration;
 
 // color module
@@ -66,13 +66,13 @@ void Emit()
             {
                 float3 position = pointOnSphere(rand(id, 1), rand(id, 2), radius);
                 p.position = mul(modelMatrix, float4(position, 1)).xyz;
-                p.velocity = normalize(p.position) * length(velocity);
+                p.velocity = normalize(p.position) * startSpeed;
             }
             break;
         case 1: // edge
             {
                 p.position = startEdge + rand(id, 1) * (endEdge - startEdge);
-                p.velocity = velocity;
+                p.velocity = float3(0.0, 1.0, 0.0) * startSpeed;
             }
             break;
     }

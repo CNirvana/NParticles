@@ -8,6 +8,7 @@ namespace Nirvana
     {
         protected override void DrawProperty(Rect position, SerializedProperty property, GUIContent label)
         {
+            EditorGUILayout.PropertyField(property.FindPropertyRelative("enabled"));
             EditorGUILayout.PropertyField(property.FindPropertyRelative("material"));
         }
     }

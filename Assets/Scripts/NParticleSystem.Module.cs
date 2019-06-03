@@ -33,7 +33,7 @@ namespace Nirvana
         [Serializable]
         public class VelocityModule : AbstractModule
         {
-            public Vector3 velocity;
+            public float startSpeed;
             public Vector3 acceleration;
         }
 
@@ -102,6 +102,7 @@ namespace Nirvana
         [Serializable]
         public class RenderingModule : AbstractModule
         {
+            public bool enabled = true;
             public Material material;
         }
     }
